@@ -8,7 +8,9 @@ import {
   PaginatedResponse,
   PaginationParams,
   RenderDeploy,
-  RenderService
+  RenderService,
+  LogsParams,
+  LogsResponse
 } from './types/renderTypes.js';
 
 /**
@@ -286,6 +288,62 @@ export class RenderClient {
   async removeCustomDomain(serviceId: string, domainId: string): Promise<boolean> {
     await this.client.delete(`/services/${serviceId}/custom-domains/${domainId}`);
     return true;
+  }
+
+  /**
+   * Get logs for a service
+   * @param params Log query parameters
+   * @returns Logs response with entries and pagination info
+   */
+  async getLogs(params: LogsParams): Promise<LogsResponse> {
+    console.error(`Getting logs with params: ${JSON.stringify(params)}`);
+    
+    try {
+      const config: AxiosRequestConfig = {
+        params: {
+          ...(params.startTime && { startTime: params.startTime }),
+          ...(params.endTime && { endTime: params.endTime }),
+          ...(params.limit && { limit: params.limit }),
+          ...(params.level && { level: params.level }),
+          ...(params.instanceId && { instanceId: params.instanceId }),
+          ...(params.deployId && { deployId: params.deployId }),
+        }
+      };
+
+      // If serviceId is provided, get logs for specific service
+      // Otherwise, get logs across all services
+      const endpoint = params.serviceId 
+        ? `/services/${params.serviceId}/logs` 
+        : '/logs';
+      
+      const response = await this.client.get<LogsResponse>(endpoint, config);
+      
+      console.error(`Logs API response: ${JSON.stringify(response.data)}`);
+      
+      // Handle potential API response variations
+      if (!response.data) {
+        return {
+          logs: [],
+          hasMore: false
+        };
+      }
+      
+      // Ensure we return the expected structure
+      return {
+        logs: response.data.logs || [],
+        hasMore: response.data.hasMore || false,
+        nextStartTime: response.data.nextStartTime,
+        nextEndTime: response.data.nextEndTime
+      };
+    } catch (error) {
+      console.error(`Logs API error: ${error instanceof Error ? error.message : String(error)}`);
+      
+      // Return empty logs on error
+      return {
+        logs: [],
+        hasMore: false
+      };
+    }
   }
 
   /**

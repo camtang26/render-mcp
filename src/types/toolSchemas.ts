@@ -247,3 +247,46 @@ export const manageDomainsSchema = {
   required: ["params"],
   additionalProperties: false
 };
+
+export const getLogsSchema = {
+  type: "object",
+  properties: {
+    params: {
+      type: "object",
+      properties: {
+        serviceId: {
+          type: "string",
+          description: "The ID of the service to get logs for (optional - omit to get all logs)"
+        },
+        startTime: {
+          type: "string",
+          description: "ISO 8601 timestamp for start time (e.g., 2024-01-01T00:00:00Z)"
+        },
+        endTime: {
+          type: "string",
+          description: "ISO 8601 timestamp for end time (e.g., 2024-01-01T23:59:59Z)"
+        },
+        limit: {
+          type: "number",
+          description: "Number of log entries to return (default: 100, max: 1000)"
+        },
+        level: {
+          type: "string",
+          enum: ["info", "warning", "error", "debug"],
+          description: "Filter logs by level"
+        },
+        instanceId: {
+          type: "string",
+          description: "Filter logs by instance ID"
+        },
+        deployId: {
+          type: "string",
+          description: "Filter logs by deploy ID"
+        }
+      },
+      additionalProperties: false
+    }
+  },
+  required: ["params"],
+  additionalProperties: false
+};

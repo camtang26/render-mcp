@@ -1,5 +1,6 @@
 import { RenderClient } from '../src/renderClient';
 import axios from 'axios';
+import { LogsParams, LogsResponse } from '../src/types/renderTypes';
 
 // Mock axios
 jest.mock('axios');
@@ -95,6 +96,95 @@ describe('RenderClient', () => {
       
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/services/srv-123/deploys', { clearCache: true });
       expect(result).toEqual(mockDeploy.data);
+    });
+  });
+
+  describe('getLogs', () => {
+    it('should fetch logs for a specific service', async () => {
+      const mockLogs: LogsResponse = {
+        logs: [
+          {
+            id: 'log-1',
+            timestamp: '2024-01-01T12:00:00Z',
+            level: 'info',
+            message: 'Server started',
+            instanceId: 'inst-123',
+          },
+          {
+            id: 'log-2',
+            timestamp: '2024-01-01T12:00:01Z',
+            level: 'error',
+            message: 'Connection failed',
+            instanceId: 'inst-123',
+          },
+        ],
+        hasMore: true,
+        nextStartTime: '2024-01-01T12:00:02Z',
+        nextEndTime: '2024-01-01T12:00:10Z',
+      };
+
+      mockAxiosInstance.get.mockResolvedValue({ data: mockLogs });
+
+      const params: LogsParams = {
+        serviceId: 'srv-123',
+        limit: 100,
+        level: 'error',
+      };
+
+      const result = await client.getLogs(params);
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        '/services/srv-123/logs',
+        {
+          params: {
+            limit: 100,
+            level: 'error',
+          },
+        }
+      );
+      expect(result).toEqual(mockLogs);
+    });
+
+    it('should fetch logs across all services when no serviceId provided', async () => {
+      const mockLogs: LogsResponse = {
+        logs: [],
+        hasMore: false,
+      };
+
+      mockAxiosInstance.get.mockResolvedValue({ data: mockLogs });
+
+      const params: LogsParams = {
+        startTime: '2024-01-01T00:00:00Z',
+        endTime: '2024-01-01T23:59:59Z',
+      };
+
+      const result = await client.getLogs(params);
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        '/logs',
+        {
+          params: {
+            startTime: '2024-01-01T00:00:00Z',
+            endTime: '2024-01-01T23:59:59Z',
+          },
+        }
+      );
+      expect(result).toEqual(mockLogs);
+    });
+
+    it('should handle errors gracefully', async () => {
+      mockAxiosInstance.get.mockRejectedValue(new Error('API error'));
+
+      const params: LogsParams = {
+        serviceId: 'srv-123',
+      };
+
+      const result = await client.getLogs(params);
+
+      expect(result).toEqual({
+        logs: [],
+        hasMore: false,
+      });
     });
   });
 

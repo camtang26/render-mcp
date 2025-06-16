@@ -16,7 +16,8 @@ import {
   getServiceSchema,
   listServicesSchema,
   manageDomainsSchema,
-  manageEnvVarsSchema
+  manageEnvVarsSchema,
+  getLogsSchema
 } from './types/toolSchemas.js';
 
 /**
@@ -119,6 +120,11 @@ function setupToolHandlers(server: Server, renderClient: RenderClient): void {
         description: 'Manage custom domains for a service',
         inputSchema: manageDomainsSchema,
       },
+      {
+        name: 'get_logs',
+        description: 'Get logs for a service or all services',
+        inputSchema: getLogsSchema,
+      },
     ],
   }));
 
@@ -156,6 +162,9 @@ function setupToolHandlers(server: Server, renderClient: RenderClient): void {
         
         case 'manage_domains':
           return await handleManageDomains(renderClient, request.params.arguments.params);
+        
+        case 'get_logs':
+          return await handleGetLogs(renderClient, request.params.arguments.params);
         
         default:
           throw new McpError(
@@ -416,4 +425,38 @@ async function handleManageDomains(renderClient: RenderClient, params: any) {
     default:
       throw new Error(`Unknown action: ${action}`);
   }
+}
+
+/**
+ * Handle get_logs tool
+ */
+async function handleGetLogs(renderClient: RenderClient, params: any) {
+  const logsResponse = await renderClient.getLogs(params);
+  
+  // Format logs for better readability
+  const formattedLogs = logsResponse.logs.map(log => {
+    const timestamp = new Date(log.timestamp).toLocaleString();
+    const level = log.level.toUpperCase().padEnd(7);
+    const instance = log.instanceId ? `[${log.instanceId}] ` : '';
+    return `${timestamp} ${level} ${instance}${log.message}`;
+  }).join('\n');
+  
+  let response = formattedLogs || 'No logs found for the specified criteria.';
+  
+  // Add pagination info if there are more logs
+  if (logsResponse.hasMore) {
+    response += '\n\n--- More logs available ---';
+    if (logsResponse.nextStartTime && logsResponse.nextEndTime) {
+      response += `\nTo fetch next page, use startTime: ${logsResponse.nextStartTime} and endTime: ${logsResponse.nextEndTime}`;
+    }
+  }
+  
+  return {
+    content: [
+      {
+        type: 'text',
+        text: response,
+      },
+    ],
+  };
 }

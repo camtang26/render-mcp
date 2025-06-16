@@ -14,6 +14,7 @@ This MCP (Model Context Protocol) server allows AI assistants like Claude to int
 - Get deployment history
 - Manage environment variables
 - Manage custom domains
+- **Get backend logs** for services with filtering and pagination
 
 ## Installation
 
@@ -149,6 +150,36 @@ Here are some example prompts you can use with Claude once the MCP server is con
 - "Show me the deployment history for my service"
 - "Add an environment variable to my service"
 - "Add a custom domain to my service"
+- **"Show me the logs for my service srv-123456"**
+- **"Get error logs from the last hour for my web service"**
+- **"Show me all warning and error logs across all my services"**
+
+## Log Retrieval
+
+The MCP server now provides full access to backend logs from your Render services. You can:
+
+- Get logs from a specific service or across all services
+- Filter logs by time range, log level, instance ID, or deploy ID
+- Navigate through paginated results for large log sets
+
+### Log Filtering Options
+
+- **serviceId**: Get logs for a specific service (optional - omit to get all logs)
+- **startTime**: ISO 8601 timestamp for start time (e.g., 2024-01-01T00:00:00Z)
+- **endTime**: ISO 8601 timestamp for end time (e.g., 2024-01-01T23:59:59Z)
+- **limit**: Number of log entries to return (default: 100, max: 1000)
+- **level**: Filter by log level (info, warning, error, debug)
+- **instanceId**: Filter logs by specific instance
+- **deployId**: Filter logs by specific deployment
+
+### Example Log Commands
+
+```
+"Show me all logs for service srv-123456"
+"Get the last 500 error logs from today"
+"Show me logs between 2024-01-01T10:00:00Z and 2024-01-01T12:00:00Z"
+"Get debug logs for deploy dep-abc123"
+```
 
 ## Development
 

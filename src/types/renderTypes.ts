@@ -120,3 +120,30 @@ export interface PaginatedResponse<T> {
   data: T[];
   cursor?: string;
 }
+
+export interface LogEntry {
+  id: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  instanceId?: string;
+  deployId?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface LogsResponse {
+  logs: LogEntry[];
+  hasMore: boolean;
+  nextStartTime?: string;
+  nextEndTime?: string;
+}
+
+export interface LogsParams {
+  serviceId?: string;
+  startTime?: string;
+  endTime?: string;
+  limit?: number;
+  level?: 'info' | 'warning' | 'error' | 'debug';
+  instanceId?: string;
+  deployId?: string;
+}
